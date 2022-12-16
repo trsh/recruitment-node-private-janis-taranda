@@ -62,7 +62,7 @@ export function setupServer(): Application {
 
   swaggerFile.servers = [
     {
-      url: `${config.APP_PROTOCOL}://${config.APP_HOST}:${config.DB_PORT}/api/${config.API_VERSION}`,
+      url: `${config.APP_PROTOCOL}://${config.APP_HOST}:${config.APP_PORT}/api/${config.API_VERSION}`,
     },
   ];
 

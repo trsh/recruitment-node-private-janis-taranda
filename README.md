@@ -6,12 +6,20 @@
 - Install [Docker](https://www.docker.com/get-started/)
 - In root dir run `npm install`
 - In root dir run `docker-compose up` to setup postgres docker image for local development
-- Create a .env file with the content from .env.test and set your `GOOGLE_MAPS_API_KEY`
+- Create a .env file with the content from .env.test and set your `GOOGLE_MAPS_API_KEY` and other parameters id need so
 - In root dir run migrations `npm run migration:run `
 - In root dir run seed migrations `npm run migration:revert:seed`
 - In root dir run `npm run start`
-- Url & script (`scripts\scripts.ts`) task results are printed in console
-- Enjoy the API
+- Url & script (`scripts\scripts.ts`) tasks results are printed in console
+
+## Testing API
+
+- In browser open `${config.APP_PROTOCOL}://${config.APP_HOST}:${config.APP_PORT}/swagger` (user and password is in `.env`)
+- Check out the API documentation
+- (optional) Swagger is not great for testing, better use Postman
+- First you want to use is `/login` to get the access token
+- Once you have the access token, use it for every next API call in header `Authorization: Bearer ${token}`
+- (Note) You will be able to modify only owned Farm
 
 ### Special comments
 

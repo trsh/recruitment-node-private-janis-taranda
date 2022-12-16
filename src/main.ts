@@ -12,7 +12,7 @@ async function bootstrap() {
   const port = config.APP_PORT;
 
   app.listen(port);
-  console.log(`Listening on port: ${port}`);
+  console.log(`Listening on ${config.APP_PROTOCOL}://${config.APP_HOST}:${config.APP_PORT}/api/${config.API_VERSION}`);
 }
 
 bootstrap();

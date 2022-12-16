@@ -4,7 +4,7 @@ import { OpenAPI, ResponseSchema } from "routing-controllers-openapi";
 import { FarmsService } from "./farms.service";
 import { CreateFarmDto } from "./dto/create-farm.dto";
 import { Farm } from "./entities/farm.entity";
-import { UnprocessableEntityError } from "errors/errors";
+import { NotFoundEntityError, UnprocessableEntityError } from "errors/errors";
 import { CoordinatesResponse, DeletionResponse } from "modules/common/responses";
 import { UserResponse } from "modules/users/users.controller";
 import { UpdateFarmDto } from "./dto/update-farm.dto";
@@ -12,8 +12,8 @@ import { IncomingMessage } from "http";
 import { BaseController } from "modules/common/base.controller";
 import { FetchListQuery, SortDirection, SortNameOptions } from "modules/common/dto/fetch-list.dto";
 import { JSONSchema } from "class-validator-jsonschema";
-import { QueryRunner } from "typeorm";
-
+import { EntityManager } from "typeorm";
+import dataSource from "orm/orm.config";
 
 export class FarmResponseBase {
   @IsUUID()
@@ -50,7 +50,7 @@ export class FarmResponse extends FarmResponseBase {
   @JSONSchema({ description: "-1 means there is no possible route" })
   public drivingDistance: number;
 
-  constructor(farm: Farm){
+  constructor(farm: Farm) {
     super(farm);
     this.drivingDistance = farm.distance;
   }
@@ -85,11 +85,11 @@ export class FarmsController extends BaseController {
     this.farmsService = new FarmsService();
   }
 
-  private async checkUserFarm(farmId: string, userId: string, queryRunner?: QueryRunner): Promise<Farm> {
-    const userFarm = await this.farmsService.findOneByIdAndUser(farmId, userId, queryRunner);
+  private async checkUserFarm(farmId: string, userId: string,  transactionalEM?: EntityManager): Promise<Farm> {
+    const userFarm = await this.farmsService.findOneByIdAndUser(farmId, userId, transactionalEM);
 
     if (!userFarm) {
-      throw new UnprocessableEntityError("Farm doesn't exist or is not owned");
+      throw new NotFoundEntityError("Farm doesn't exist or is not owned");
     }
 
     return userFarm;
@@ -130,9 +130,9 @@ export class FarmsController extends BaseController {
   @Delete("/:id")
   @ResponseSchema(FarmResponse)
   public async delete(@Req() request: IncomingMessage, @Param("id") id: string): Promise<DeletionResponse> {
-    return this.transactionWrap<DeletionResponse>(async (queryRunner: QueryRunner) => {
-      const farm = await this.checkUserFarm(id, request.user.id, queryRunner);
-      const deletions = await this.farmsService.deleteById(farm.id);
+    return dataSource.transaction<DeletionResponse>(async (transactionalEM) => {
+      const farm = await this.checkUserFarm(id, request.user.id, transactionalEM);
+      const deletions = await this.farmsService.deleteById(farm.id, transactionalEM);
       return new DeletionResponse(deletions);
     });
   }
@@ -140,11 +140,11 @@ export class FarmsController extends BaseController {
   @Put("/:id")
   @ResponseSchema(FarmResponseBase)
   public async update(@Req() request: IncomingMessage, @Param("id") id: string, @Body() body: UpdateFarmDto): Promise<FarmResponseBase> {
-    this.throwEmptyBody(body);
+    this.throwEmptyBody(body);    
 
-    return this.transactionWrap<FarmResponseBase>(async (queryRunner: QueryRunner) => {
-      const farm = await this.checkUserFarm(id, request.user.id, queryRunner);
-      const updateFarm = await this.farmsService.update(farm, body, queryRunner);
+    return dataSource.transaction<FarmResponseBase>(async (transactionalEM) => {
+      const farm = await this.checkUserFarm(id, request.user.id, transactionalEM);
+      const updateFarm = await this.farmsService.update(farm, body, transactionalEM);
 
       if (updateFarm) {
         return new FarmResponseBase(updateFarm);
@@ -157,8 +157,8 @@ export class FarmsController extends BaseController {
   @Post()
   @ResponseSchema(FarmResponseBase)
   public async create(@Req() request: IncomingMessage, @Body() body: CreateFarmDto): Promise<FarmResponseBase | null> {
-    return this.transactionWrap<FarmResponseBase | null>(async (queryRunner: QueryRunner) => {
-      const farm = await this.farmsService.createFarm(body, request.user.id, queryRunner);
+    return dataSource.transaction<FarmResponseBase | null>(async (transactionalEM) => {
+      const farm = await this.farmsService.createFarm(body, request.user.id, transactionalEM);
 
       if (farm) {
         return new FarmResponseBase(farm);

@@ -1,7 +1,7 @@
 import * as bcrypt from "bcrypt";
 import config from "config/config";
 import { UnprocessableEntityError } from "errors/errors";
-import { DeepPartial, FindOptionsWhere, QueryRunner, Repository } from "typeorm";
+import { DeepPartial, EntityManager, FindOptionsWhere, Repository } from "typeorm";
 import { Point } from "geojson";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { User } from "./entities/user.entity";
@@ -16,12 +16,12 @@ export class UsersService {
     this._usersRepository = dataSource.getRepository(User);
   }
 
-  private usersRepository(queryRunner?: QueryRunner) {
-    return queryRunner ? queryRunner.manager.getRepository(User) : this._usersRepository;
+  private usersRepository(transactionalEM?: EntityManager) {
+    return transactionalEM ? transactionalEM.getRepository(User) : this._usersRepository;
   }
 
-  public async createUser(data: CreateUserDto, queryRunner: QueryRunner): Promise<User> {
-    const usersRepository = this.usersRepository(queryRunner);
+  public async createUser(data: CreateUserDto, transactionalEM: EntityManager): Promise<User> {
+    const usersRepository = this.usersRepository(transactionalEM);
     const { email, password, address: providedAddress } = data;
 
     const existingUser = await this.findOneBy({ email: email });
@@ -43,8 +43,8 @@ export class UsersService {
     return usersRepository.save(newUser);
   }
 
-  public async findOneBy(param: FindOptionsWhere<User>, queryRunner?: QueryRunner): Promise<User | null> {
-    const usersRepository = this.usersRepository(queryRunner);
+  public async findOneBy(param: FindOptionsWhere<User>, transactionalEM?: EntityManager): Promise<User | null> {
+    const usersRepository = this.usersRepository(transactionalEM);
     return usersRepository.findOneBy({ ...param });
   }
 

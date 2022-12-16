@@ -6,11 +6,10 @@ import {
   Authorized, Body, JsonController, Post,
 } from "routing-controllers";
 import { OpenAPI, ResponseSchema } from "routing-controllers-openapi";
-import { QueryRunner } from "typeorm";
-
 import { CreateUserDto } from "./dto/create-user.dto";
 import { User } from "./entities/user.entity";
 import { UsersService } from "./users.service";
+import dataSource from "orm/orm.config";
 
 export class UserResponse {
   @IsUUID()
@@ -47,8 +46,8 @@ export class UsersController extends BaseController {
   @Post()
   @ResponseSchema(UserResponse)
   public async create(@Body() body: CreateUserDto): Promise<UserResponse> {
-    return this.transactionWrap<UserResponse>(async (queryRunner: QueryRunner) => {
-      const user = await this.usersService.createUser(body, queryRunner);
+    return dataSource.transaction<UserResponse>(async (transactionalEM) => {
+      const user = await this.usersService.createUser(body, transactionalEM);
 
       if (user) {
         return new UserResponse(user);

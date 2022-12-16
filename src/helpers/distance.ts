@@ -37,8 +37,6 @@ export class Distance {
         if (results?.data?.rows?.length) {
           const distances: number[] = [];
 
-          console.log(JSON.stringify(results?.data?.rows));
-
           for (const result of results.data.rows) {
             for (const element of result.elements) {
               if (element.status !== Status.OK) {

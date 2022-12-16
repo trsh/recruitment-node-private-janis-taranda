@@ -1,5 +1,5 @@
-import { QueryRunner } from "typeorm";
-import dataSource from "orm/orm.config";
+//import { QueryRunner } from "typeorm";
+//import dataSource from "orm/orm.config";
 import { UnprocessableEntityError } from "errors/errors";
 
 
@@ -9,8 +9,9 @@ export class BaseController {
       throw new UnprocessableEntityError(message);
     }
   }
-
-  protected async transactionWrap<T>(fn: (queryRunner: QueryRunner) => Promise<T>): Promise<T> {
+  
+  // Better? alternative is to use `myDataSource.manager.transaction`
+  /*protected async transactionWrap<T>(fn: (queryRunner: QueryRunner) => Promise<T>): Promise<T> {
     const queryRunner = dataSource.createQueryRunner();
     await queryRunner.startTransaction()
     try {
@@ -24,5 +25,5 @@ export class BaseController {
     } finally {
       await queryRunner.release()
     }
-  }
+  }*/
 }

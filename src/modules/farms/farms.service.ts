@@ -1,5 +1,5 @@
 import { UnprocessableEntityError } from "errors/errors";
-import { DeepPartial, FindOptionsOrder, FindOptionsWhere, LessThan, MoreThan, QueryRunner, Repository } from "typeorm";
+import { DeepPartial, EntityManager, FindOptionsOrder, FindOptionsWhere, LessThan, MoreThan, Repository } from "typeorm";
 import { CreateFarmDto } from "./dto/create-farm.dto";
 import { Farm } from "./entities/farm.entity";
 import dataSource from "orm/orm.config";
@@ -22,17 +22,17 @@ export class FarmsService {
     this._farmsRepository = dataSource.getRepository(Farm);
   }
 
-  private farmsRepository(queryRunner?: QueryRunner) {
-    return queryRunner ? queryRunner.manager.getRepository(Farm) : this._farmsRepository;
+  private farmsRepository(transactionalEM?: EntityManager) {
+    return transactionalEM ? transactionalEM.getRepository(Farm) : this._farmsRepository;
   }
 
-  public async createFarm(data: CreateFarmDto, userId: string, queryRunner: QueryRunner): Promise<Farm> {
+  public async createFarm(data: CreateFarmDto, userId: string, transactionalEM: EntityManager): Promise<Farm> {
     const { name, size, theYield, address: providedAddress } = data;
 
     const existingFarm = await this.findOneBy({ name });
     if (existingFarm) throw new UnprocessableEntityError("A farm with this name already exists");
 
-    const existingUser = await this.usersService.findOneBy({ id: userId }, queryRunner);
+    const existingUser = await this.usersService.findOneBy({ id: userId }, transactionalEM);
 
     if (!existingUser) {
       throw new UnprocessableEntityError("There no user with provided id");
@@ -49,7 +49,7 @@ export class FarmsService {
     const owner = existingUser;
     const farmData: DeepPartial<Farm> = { name, address, size, theYield, coordinates, owner };
 
-    const farmsRepository = this.farmsRepository(queryRunner);
+    const farmsRepository = this.farmsRepository(transactionalEM);
 
     const newFarm = farmsRepository.create(farmData);
     const newFarmRecord = await farmsRepository.save(newFarm);
@@ -60,9 +60,9 @@ export class FarmsService {
   public async findOneBy(
     param: FindOptionsWhere<Farm>,
     fetchUsers: boolean = false,
-    queryRunner?: QueryRunner
+    transactionalEM?: EntityManager
   ): Promise<Farm | null> {
-    const farmsRepository = this.farmsRepository(queryRunner);
+    const farmsRepository = this.farmsRepository(transactionalEM);
     const results = await farmsRepository.find({
       where: param,
       relations: fetchUsers ? ["owner"] : []
@@ -96,9 +96,9 @@ export class FarmsService {
     user: User,
     sortByDistanceDir?: SortDirection,
     filterOutliers: boolean = false,
-    queryRunner?: QueryRunner
+    transactionalEM?: EntityManager
   ): Promise<Farm[]> {
-    const farmsRepository = this.farmsRepository(queryRunner);
+    const farmsRepository = this.farmsRepository(transactionalEM);
 
     const sortNames = fetchListQuery.sortByNames || [];
     const sortDirections = fetchListQuery.sortByDirections || [];
@@ -163,8 +163,8 @@ export class FarmsService {
     return results;
   }
 
-  public async findOneByIdAndUser(id: string, userId: string, queryRunner?: QueryRunner): Promise<Farm | null> {
-    const farmsRepository = this.farmsRepository(queryRunner);
+  public async findOneByIdAndUser(id: string, userId: string, transactionalEM?: EntityManager): Promise<Farm | null> {
+    const farmsRepository = this.farmsRepository(transactionalEM);
     const results = await farmsRepository.find({
       where: {
         "id": id,
@@ -181,14 +181,14 @@ export class FarmsService {
     return null;
   }
 
-  public async deleteById(id: string, queryRunner?: QueryRunner): Promise<number | null | undefined> {
-    const farmsRepository = this.farmsRepository(queryRunner);
+  public async deleteById(id: string, transactionalEM?: EntityManager): Promise<number | null | undefined> {
+    const farmsRepository = this.farmsRepository(transactionalEM);
     const results = await farmsRepository.delete({ id });
     return results.affected;
   }
 
-  public async update(farm: Farm, params: UpdateFarmDto, queryRunner: QueryRunner): Promise<Farm | null | undefined> {
-    const farmsRepository = this.farmsRepository(queryRunner);
+  public async update(farm: Farm, params: UpdateFarmDto, transactionalEM: EntityManager): Promise<Farm | null | undefined> {
+    const farmsRepository = this.farmsRepository(transactionalEM);
     const { address: providedAddress, userId } = params;
 
     farm = plainToClassFromExist(farm, params);
@@ -207,7 +207,7 @@ export class FarmsService {
     }
 
     if (userId) {
-      const existingUser = await this.usersService.findOneBy({ id: userId }, queryRunner);
+      const existingUser = await this.usersService.findOneBy({ id: userId }, transactionalEM);
 
       if (!existingUser) {
         throw new UnprocessableEntityError("There no user with provided id");
