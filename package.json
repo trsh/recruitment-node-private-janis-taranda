@@ -1,0 +1,88 @@
+{
+  "name": "recruitment-node",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "tsc",
+    "start": "nodemon -e ts -w ./src src/main.ts",
+    "lint": "eslint \"{src, test}/**/*.ts\" --fix",
+    "typeorm": "typeorm-ts-node-commonjs -d src/orm/orm.config.ts",
+    "typeorm:seed": "typeorm-ts-node-commonjs -d src/orm/orm.config.ts",
+    "migration:generate": "cross-var npm run typeorm migration:generate ./src/orm/migrations/$npm_config_name",
+    "migration:show": "npm run typeorm migration:show",
+    "migration:run": "npm run typeorm migration:run",
+    "migration:revert": "npm run typeorm migration:revert",
+    "migration:run:seed": "npm run typeorm:seed migration:run --seed=1",
+    "migration:revert:seed": "npm run typeorm:seed migration:revert --seed=1",
+    "migration:create": "cross-var typeorm migration:create ./src/modules/$npm_config_path/migrations/$npm_config_name",
+    "migration:create:seed": "cross-var typeorm migration:create ./src/orm/seeds/$npm_config_name",
+    "prepare": "husky install"
+  },
+  "author": "Agreena",
+  "license": "ISC",
+  "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.3.16",
+    "@types/geojson": "^7946.0.10",
+    "axios": "^1.2.1",
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.1",
+    "class-transformer": "^0.3.1",
+    "class-transformer-up": "npm:class-transformer@^0.5.1",
+    "class-validator": "^0.12.2",
+    "class-validator-jsonschema": "^2.2.0",
+    "date-fns": "^2.29.3",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-basic-auth": "^1.2.1",
+    "jsonwebtoken": "^8.5.1",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.0",
+    "pg": "^8.8.0",
+    "reflect-metadata": "^0.1.13",
+    "routing-controllers": "^0.9.0",
+    "routing-controllers-openapi": "^3.1.0",
+    "swagger-ui-express": "^4.6.0",
+    "typeorm": "^0.3.10"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/express": "^4.17.14",
+    "@types/jest": "^29.2.2",
+    "@types/jsonwebtoken": "^8.5.9",
+    "@types/node": "^18.11.12",
+    "@types/supertest": "^2.0.12",
+    "@types/swagger-ui-express": "^4.1.3",
+    "@typescript-eslint/eslint-plugin": "^5.42.1",
+    "@typescript-eslint/parser": "^5.42.1",
+    "cross-var": "^1.1.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.2",
+    "jest": "^29.3.1",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.7.1",
+    "source-map-support": "^0.5.21",
+    "supertest": "^6.3.1",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.1.0",
+    "typescript": "^4.8.4"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "modulePaths": [
+      "<rootDir>",
+      "/src/modules"
+    ]
+  }
+}
